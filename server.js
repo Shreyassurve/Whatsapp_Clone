@@ -1,18 +1,28 @@
 const express = require('express');
-const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 
 const app = express();
-const PORT = 3000;
+const server = http.createServer(app);
+const io = socketIo(server);
 
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public')); // Serve static files (HTML, CSS, JS)
 
-// Fallback route for unmatched requests
-app.use((req, res) => {
-  res.status(404).send('404 - Page not found');
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  // Handle incoming messages from clients
+  socket.on('chat message', (msg) => {
+    console.log('Message received: ', msg);
+    io.emit('chat message', msg); // Broadcast the message to all clients
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+server.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
 });
